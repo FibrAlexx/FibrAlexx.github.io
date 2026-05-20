@@ -60,7 +60,6 @@ post:
   read_time:
     unit: min
     prompt: läsning
-  edit: Redigera detta inlägg
   relate_posts: Mer läsning
   share: Dela
   button:

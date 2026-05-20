@@ -60,7 +60,6 @@ post:
   read_time:
     unit: хвилин
     prompt: читання
-  edit: Редагувати цей пост
   relate_posts: Вас також може зацікавити
   share: Поділитися
   button:

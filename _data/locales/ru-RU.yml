@@ -59,7 +59,6 @@ post:
   read_time:
     unit: мин.
     prompt: чтения
-  edit: Редактировать этот пост
   relate_posts: Похожие посты
   share: Поделиться
   button:

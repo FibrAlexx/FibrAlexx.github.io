@@ -59,7 +59,6 @@ post:
   read_time:
     unit: Minuten
     prompt: Lesezeit
-  edit: Diesen Eintrag bearbeiten
   relate_posts: Weiterlesen
   share: Teilen
   button:

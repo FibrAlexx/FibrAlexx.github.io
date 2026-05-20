@@ -60,7 +60,6 @@ post:
   read_time:
     unit: min
     prompt: read
-  edit: Edit this post
   relate_posts: Further Reading
   share: Share
   button:

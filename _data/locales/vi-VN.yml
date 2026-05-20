@@ -59,7 +59,6 @@ post:
   read_time:
     unit: phút
     prompt: đọc
-  edit: Chỉnh sửa bài viết này
   relate_posts: Bài viết liên quan
   share: Chia sẻ
   button:

@@ -60,7 +60,6 @@ post:
   read_time:
     unit: dakikada
     prompt: okunabilir
-  edit: Bu gönderiyi düzenle
   relate_posts: Benzer Gönderiler
   share: Paylaş
   button:

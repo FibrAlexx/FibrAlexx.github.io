@@ -60,7 +60,6 @@ post:
   read_time:
     unit: 分
     prompt: で読めます
-  edit: この投稿を編集
   relate_posts: さらに読む
   share: シェア
   button:

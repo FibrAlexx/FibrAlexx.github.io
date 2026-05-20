@@ -61,7 +61,6 @@ post:
   read_time:
     unit: perc
     prompt: elolvasni
-  edit: Szerkesztés
   relate_posts: További olvasnivaló
   share: Megosztás
   button:

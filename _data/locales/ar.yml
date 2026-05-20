@@ -60,7 +60,6 @@ post:
   read_time:
     unit: دقيقة
     prompt: قراءة
-  edit: حرر هذا المنشور
   relate_posts: إقرأ المزيد
   share: شارك
   button:

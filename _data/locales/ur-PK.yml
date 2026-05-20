@@ -60,7 +60,6 @@ post:
   read_time:
     unit: منٹ
     prompt: پڑھیں
-  edit: اس تحریر میں ترمیم کریں
   relate_posts: مزید مطالعہ
   share: شیئر
   button:
