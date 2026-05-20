@@ -1,5 +1,5 @@
 ---
-title: "Exploitation Mémoire"
+title: "Use After Free"
 date: 2026-05-20 12:00:00 +0200
 categories: [Cybersécurité, Documentation, x64, Heap Exploitation]
 tags: [pwn, mémoire, exploit]
