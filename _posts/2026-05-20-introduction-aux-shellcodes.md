@@ -1,7 +1,7 @@
 ---
 title: "Introduction aux shellcodes"
 date: 2026-05-20 12:00:00 +0200
-categories: [Cybersécurité, Documentation]
+categories: [Documentation]
 tags: [pwn, mémoire, exploit]
 ---
 # Introduction aux shellcodes
