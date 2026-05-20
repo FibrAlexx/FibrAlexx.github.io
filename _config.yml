@@ -2,26 +2,23 @@ theme: jekyll-theme-chirpy
 lang: fr
 timezone: Europe/Paris
 
-title: Inas Salkanovic
-tagline: Hardware Hacking · Pentesting · Security Research
+title: Alexis BOUR
+tagline: Pwn · Reverse learner
 description: >-
-  Security research, HTB writeups, hardware hacking et analyse de firmware
-  par Inas Salkanovic. Spécialisé en cybersécurité, side-channel attacks et infrastructure réseau.
+  Documentation sur le pwn, reverse et programmes d'aide pour semi et automatisation.
 
-url: "https://lunkan387.github.io"
+url: "https://fibralexx.github.io"
 baseurl: ""
 
 github:
-  username: Lunkan387
+  username: FibrAlexx
 
 social:
-  name: Inas Salkanovic
-  email: inassalkanovic40@proton.me
+  name: Alexis BOUR
   links:
-    - https://github.com/Lunkan387
-    - https://www.linkedin.com/in/inas-salkanovic-3b46a6303
+    - https://github.com/FibrAlexx
 
-avatar: /assets/images/avatar2.png
+avatar: 
 theme_mode: dark
 toc: true
 
