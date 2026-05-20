@@ -12,9 +12,9 @@ Un shellcode est une suite d'instructions machine injectées dans la mémoire d'
 
 Ce code exécute en général un interpréteur de commandes "/bin/sh", d'où son nom shellcode, mais il est aussi possible d'exécuter n'importe quel syscall que le kernel peut traduire.
 
-##### En mémoire 
+##### En mémoire
 
-Afin que ce code soit exécuté, deux conditions doivent être réunies : 
+Afin que ce code soit exécuté, deux conditions doivent être réunies :
 
 * Le pointeur d'instruction (RIP en 64 bits) doit être redirigé vers l'adresse de début de notre shellcode.
 * La zone mémoire dans lequel notre shellcode se situe doit être exécutable, c'est-à-dire qu'elle doit posséder la permission **Exécution** (x).
@@ -25,18 +25,18 @@ Comme mentionné précédemment, un shellcode peut exécuter n'importe quel **sy
 
 Afin de lancer un shell sous Linux x86_64 (64-bits), nous utilisons le syscall **sys_execve** (numéro 59), ce numéro change selon l'architecture, il est donc important de vérifier chaque numéro via une table de syscalls lors de l'écriture ou l'exécution d'un shellcode. La convention d'appel, elle-même différente selon les architectures impose de remplir des registres spécifiques avant de déclencher le syscall :
 
-| REGISTRE | ROLE                                              |                             VALEUR REQUISE POUR EXECVE                             |
-| :------: | ------------------------------------------------- | :---------------------------------------------------------------------------------: |
-|   RAX   | Numéro du Syscall                                |                                      59 (0x3b)                                      |
+| REGISTRE |                       ROLE                       |                             VALEUR REQUISE POUR EXECVE                             |
+| :------: | :-----------------------------------------------: | :---------------------------------------------------------------------------------: |
+|   RAX   |                Numéro du Syscall                |                                      59 (0x3b)                                      |
 |   RDI   | 1er argument : Pointeur vers la chaîne "/bin/sh" | Adresse de "/bin/sh"(à ne pas confondre<br />avec l'ajout de la valeur uniquement) |
-|   RSI   | 2e argument : Tableau d'arguments argv            |                                      0 (NULL)                                      |
-|   RDX   | 3e argument : Tableau d'environnement envp        |                                      0 (NULL)                                      |
+|   RSI   |      2e argument : Tableau d'arguments argv      |                                      0 (NULL)                                      |
+|   RDX   |    3e argument : Tableau d'environnement envp    |                                      0 (NULL)                                      |
 
 ### 3. Ecriture du code (Assembleur)
 
 La contrainte majeure d'un shellcode est la limitation voire l'interdiction des octets nuls (NULL bytes \x00). Ces octets nuls stoppent la lecture, ainsi si le programme vulnérable utilise une fonction comme read() (dans  la grande majorité des cas) ou strcpy(), alors celui-ci s'arrêtera de lire au premier 0x00 trouvé, coupant ainsi notre exploit.
 
-Nous allons ainsi construire un simple code en assembleur permettant d'exécuter le syscall sys_execve qui nous permettra d'obtenir un shell sans utiliser d'octets nuls : 
+Nous allons ainsi construire un simple code en assembleur permettant d'exécuter le syscall sys_execve qui nous permettra d'obtenir un shell sans utiliser d'octets nuls :
 
 ```
 section .text 
@@ -75,7 +75,7 @@ Afin de compiler le programme et de le transformer un binaire, nous allons utili
 
 `chmod +x shellcode`
 
-Ainsi nous récupérons un binaire **shellcode** , une fois exécuté via la commande : 
+Ainsi nous récupérons un binaire **shellcode** , une fois exécuté via la commande :
 
 `./shellcode`
 
