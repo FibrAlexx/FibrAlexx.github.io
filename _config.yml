@@ -1,0 +1,13 @@
+title: FibrAlexx
+tagline: public
+description: Projets et documentations
+url: "https://FibrAlexx.github.io"
+baseurl: ""
+
+remote_theme: pages-themes/midnight@v0.2.0
+
+plugins:
+  - jekyll-remote-theme
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
