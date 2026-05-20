@@ -1,7 +1,7 @@
 ---
 title: "Détournement de fonction"
 date: 2026-05-20 12:00:00 +0200
-categories: [Cybersécurité, Documentation, x64, Stack Exploitation]
+categories: [Cybersécurité, Stack Exploitation x64]
 tags: [pwn, mémoire, exploit]
 ---
 #### Détournement de fonction tiers SANS protection
