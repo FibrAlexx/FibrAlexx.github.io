@@ -1,0 +1,42 @@
+---
+layout: default
+title: Accueil
+---
+
+<section>
+  <h1>Bienvenue sur mon espace de documentation 🚀</h1>
+  <p>Tu trouveras ici mes projets publics, mes writeups et mes documentations techniques.</p>
+</section>
+
+<hr>
+
+<!-- SECTION DOCUMENTATIONS (Liens manuels ou redirections) -->
+<section style="margin-top: 20px;">
+  <h2>m0n p0rtf0li0 & d0cs</h2>
+  <p>Ressources et trucs utiles :</p>
+  <ul>
+    <li><a href="https://github.com/FibrAlexx" target="_blank">Mon profil GitHub</a></li>
+    <!-- Tu pourras ajouter tes pages de doc ici, ex: <li><a href="/docs/cheat-sheet.html">Cheat Sheet</a></li> -->
+  </ul>
+</section>
+
+<hr>
+
+<!-- SECTION BLOG / WRITEUPS (Générée automatiquement par Jekyll) -->
+<section style="margin-top: 20px;">
+  <h2>Derniers articles & Writeups</h2>
+  
+  {% if site.posts.size > 0 %}
+    <ul class="posts-list">
+      {% for post in site.posts %}
+        <li style="margin-bottom: 10px;">
+          <span style="color: #666; font-size: 0.9em; margin-right: 10px;">{{ post.date | date: "%d/%m/%Y" }}</span>
+          <a href="{{ post.url | relative_url }}" style="font-weight: bold;">{{ post.title }}</a>
+          <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #888;">{{ post.excerpt | strip_html | truncatewords: 15 }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Aucun article disponible pour le moment. Ils apparaîtront ici dès qu'ils seront ajoutés dans le dossier <code>_posts</code> !</p>
+  {% endif %}
+</section>
