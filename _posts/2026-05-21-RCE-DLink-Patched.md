@@ -6,7 +6,7 @@ tags: [pwn, IoT, exploit]
 ---
 #### 1. Introduction
 
-Ce projet consiste en la documentation du processus d'analyse d'un firmware, l'extraction de son système de fichiers ainsi qu'à l'identification d'une vulnérabilité RCE par injection de commande via reverse engineering puis enfin à son exploitation grâce à l'émulation.
+Ce projet consiste en la documentation du processus d'analyse d'un firmware, l'extraction de son système de fichiers ainsi qu'à l'identification d'une vulnérabilité RCE par injection de commande via reverse engineering.
 
 Nous allons ainsi nous servir du firmware d'un routeur grand public : le D-Link DIR-605L (Firmware v1.13).
 
