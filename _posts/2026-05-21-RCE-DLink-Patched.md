@@ -20,7 +20,7 @@ Une injection de commande devient alors possible si l'entrée n'est pas nettoyé
 
 #### 3. Extraction du firmware et analyse de la structure
 
-Avant toute analyse du binaire du serveur web, il faut tout d'abord l'éxtraire de l'image globale du firmware (.bin). Pour se faire, nous utilisons donc un outil connu et simple d'utilisation appelé **Binwalk**. Cet outil permet l'extraction de données basée sur les signatures et les headers en recherchant les magic numbers.
+Avant toute analyse du binaire du serveur web, il faut tout d'abord l'extraire de l'image globale du firmware (.bin). Pour se faire, nous utilisons donc un outil connu et simple d'utilisation appelé **Binwalk**. Cet outil permet l'extraction de données basée sur les signatures et les headers en recherchant les magic numbers.
 
 `binwalk -eM dir605L_FW_113.bin`
 
