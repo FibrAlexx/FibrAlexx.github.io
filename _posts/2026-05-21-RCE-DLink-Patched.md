@@ -72,7 +72,7 @@ Boa est un serveur web open source très léger, beaucoup utilisé dans les rout
 
 Nous pouvons aussi noter la présence de `boa-dog.sh`, qui est un script **"Watchdog"** chargé de surveiller le processus `boa` et de le relancer s'il plante.
 
-Comme attendu le firmware du routeur se sert d'une architecture MIPS 32-bits, la particularité des architectures MIPS est l'endianness différente. En effet la grande majorité des architectures telles que x86_64, x86, ARM ou encore RISC-V sont en little endian, c'est-à-dire que la lecture des bits se fait du bits de poids faible vers le bit de poids fort (ex :` ici l'adresse 0xcafebabe se lira : 0xbe, 0xba, 0xfe, 0xca`)
+Comme attendu le firmware du routeur se sert d'une architecture MIPS 32-bits, la particularité des architectures MIPS est l'endianness différente. En effet la grande majorité des architectures telles que x86_64, x86, ARM ou encore RISC-V utilisent le little endian, c'est-à-dire que la lecture des bits se fait du bits de poids faible vers le bit de poids fort (ex :` ici l'adresse 0xcafebabe se lira : 0xbe, 0xba, 0xfe, 0xca`)
 
 L'architecture MIPS est donc différente, elle est en big endian, ainsi les bits sont lus du bit de poids fort vers le bit de poids faible, il est possible d'obtenir quelques informations sur le binaire en se servant de la commande native **file** :
 
