@@ -14,9 +14,9 @@ Nous allons ainsi nous servir du firmware d'un routeur grand public : le D-Link 
 
 La vulnérabilité étudiée se trouve ici dans la gestion des requêtes HTTP par le serveur web embarqué du routeur. Lorsqu'un utilisateur interagit avec la page de diagnostic contenant différentes fonctions telles que la vérification réseau via la commande ping, le serveur web récupère l'adresse IP entrée par l'utilisateur.
 
-La faille réside dans l'assemblage de la commande shell (ex: `ping -c 1 [IP_UTILISATEUR]`), le programme assemble une chaîne de caractères en mémoire au lieu d'utiliser des API système isolées. Celui-ci transmet ensuite la chaîne à un interpreteur de commandes via la fonction system().
+La faille réside dans l'assemblage de la commande shell (ex: ```ping -c 1 [IP_UTILISATEUR]```), le programme assemble une chaîne de caractères en mémoire au lieu d'utiliser des API système isolées. Celui-ci transmet ensuite la chaîne à un interpreteur de commandes via la fonction system().
 
-Une injection de commande devient alors possible si l'entrée n'est pas nettoyée, un attaquant peut insérer des opérateurs logiques shell (`; , && , |`) afin de forcer le routeur à exécuter des commandes arbitraires avec les privilèges root.
+Une injection de commande devient alors possible si l'entrée n'est pas nettoyée, un attaquant peut insérer des opérateurs logiques shell (```; , && , |```) afin de forcer le routeur à exécuter des commandes arbitraires avec les privilèges root.
 
 #### 3. Extraction du firmware et analyse de la structure
 
@@ -29,7 +29,7 @@ Avant toute analyse du binaire du serveur web, il faut tout d'abord l'éxtraire 
 
 Il est possible que binwalk renvoie une erreur de type :
 
-`WARNING: Extractor.execute failed to run external extractor 'sasquatch -p 1 -le -d 'squashfs-root' '%e'': [Errno 2] No such file or directory: 'sasquatch', 'sasquatch -p 1 -le -d 'squashfs-root' '%e'' might not be installed correctly`
+```WARNING: Extractor.execute failed to run external extractor 'sasquatch -p 1 -le -d 'squashfs-root' '%e'': [Errno 2] No such file or directory: 'sasquatch', 'sasquatch -p 1 -le -d 'squashfs-root' '%e'' might not be installed correctly```
 
 Les constructeurs modifient souvent le format standard du système de fichiers SquashFS pour des raisons d'optimisations ou d'obfuscation, il est donc important d'avoir un outil permettant de lire ces version modifiées. Il existe donc un outil nommé **sasquatch** permettant de forcer l'ouverture de ces formats.
 
@@ -278,6 +278,8 @@ void websAspInit(void)
   websFormDefine("formWlanGuestSetup",formWlanGuestSetup);
   websFormDefine("formMydlinkWizardRegister",formMydlinkWizardRegister);
   websFormDefine("form_wireless",form_wireless);
+</style>
+
   websFormDefine("form_network",form_network);
   websFormDefine("form_macfilter",form_macfilter);
   websFormDefine("form_wlan_acl",form_wlan_acl);
@@ -587,6 +589,8 @@ LAB_00456044:
       else {
 LAB_004560e8:
         if ((local_240[0] != '\0') || (iVar2 != 0)) goto LAB_00456100;
+</style>
+
       }
       check_auth_flag = 2;
       loginFailFlag = 0;
