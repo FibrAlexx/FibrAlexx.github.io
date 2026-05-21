@@ -14,9 +14,9 @@ Nous allons ainsi nous servir du firmware d'un routeur grand public : le D-Link 
 
 La vulnérabilité étudiée se trouve ici dans la gestion des requêtes HTTP par le serveur web embarqué du routeur. Lorsqu'un utilisateur interagit avec la page de diagnostic contenant différentes fonctions telles que la vérification réseau via la commande ping, le serveur web récupère l'adresse IP entrée par l'utilisateur.
 
-La faille réside dans l'assemblage de la commande shell (ex: ```ping -c 1 [IP_UTILISATEUR]```), le programme assemble une chaîne de caractères en mémoire au lieu d'utiliser des API système isolées. Celui-ci transmet ensuite la chaîne à un interpreteur de commandes via la fonction system().
+La faille réside dans l'assemblage de la commande shell (ex: ``ping -c 1 [IP_UTILISATEUR]``), le programme assemble une chaîne de caractères en mémoire au lieu d'utiliser des API système isolées. Celui-ci transmet ensuite la chaîne à un interpreteur de commandes via la fonction system().
 
-Une injection de commande devient alors possible si l'entrée n'est pas nettoyée, un attaquant peut insérer des opérateurs logiques shell (```; , && , |```) afin de forcer le routeur à exécuter des commandes arbitraires avec les privilèges root.
+Une injection de commande devient alors possible si l'entrée n'est pas nettoyée, un attaquant peut insérer des opérateurs logiques shell (``; , && , |``) afin de forcer le routeur à exécuter des commandes arbitraires avec les privilèges root.
 
 #### 3. Extraction du firmware et analyse de la structure
 
@@ -29,7 +29,7 @@ Avant toute analyse du binaire du serveur web, il faut tout d'abord l'éxtraire 
 
 Il est possible que binwalk renvoie une erreur de type :
 
-```WARNING: Extractor.execute failed to run external extractor 'sasquatch -p 1 -le -d 'squashfs-root' '%e'': [Errno 2] No such file or directory: 'sasquatch', 'sasquatch -p 1 -le -d 'squashfs-root' '%e'' might not be installed correctly```
+``WARNING: Extractor.execute failed to run external extractor 'sasquatch -p 1 -le -d 'squashfs-root' '%e'': [Errno 2] No such file or directory: 'sasquatch', 'sasquatch -p 1 -le -d 'squashfs-root' '%e'' might not be installed correctly``
 
 Les constructeurs modifient souvent le format standard du système de fichiers SquashFS pour des raisons d'optimisations ou d'obfuscation, il est donc important d'avoir un outil permettant de lire ces version modifiées. Il existe donc un outil nommé **sasquatch** permettant de forcer l'ouverture de ces formats.
 
@@ -40,7 +40,7 @@ Une fois l'outil installé nous pouvons donc relancer la commande binwalk qui ne
 
 Nous allons maintenant nous intéresser au système de fichiers, ici **squashfs-root-0**
 
-![1779366798319](image/2026-05-21-RCE-TPLink-Patched/1779366798319.png)
+![1779366798319](assets/images/2026-05-21-RCE-TPLink-Patched/1779366798319.png)
 
 En se servant de la commande **tree** nous pouvons apercevoir dans la partie dossier ` web/` un dossier appelé `mydlink/` contenant différents fichiers au format `.asp`, les fichiers possédant cette extension sont des fichiers Active Server Page, ce sont des documents web qui peuvent contenir des codes HTML, textes, graphiques et XML, ainsi ces fichiers serveur ne possèdent aucun code classique mais une directive côté serveur. Le vrai code de ces fichiers est donc compilé à l'intérieur du binaire du serveur web.
 
@@ -68,7 +68,7 @@ En déroulant les différents binaires présents nous tombons directement sur le
 
 Boa est un serveur web open source très léger, beaucoup utilisé dans les routeurs au début des années 2000-2010. Les constructeurs y ajoutaient en général des modifications pour supporter les scrtips ASP et les formulaires, créeant ainsi des failles d'exploitation.
 
-![1779367785072](image/2026-05-21-RCE-TPLink-Patched/1779367785072.png)
+![1779367785072](assets/images/2026-05-21-RCE-TPLink-Patched/1779367785072.png)
 
 Nous pouvons aussi noter la présence de `boa-dog.sh`, qui est un script **"Watchdog"** chargé de surveiller le processus `boa` et de le relancer s'il plante.
 
@@ -86,7 +86,7 @@ Nous allons donc nous servir de l'outil Ghidra qui permet de désassembler le co
 
 Grâce aux informations récupérées précédemment via la commande **file** nous pouvons donc ouvrir le binaire avec Ghidra en y rentrant les bonnes informations :
 
-![1779368536195](image/2026-05-21-RCE-TPLink-Patched/1779368536195.png)
+![1779368536195](assets/images/2026-05-21-RCE-TPLink-Patched/1779368536195.png)
 
 Nous choisissons donc ici comme langage : MIPS 32 - bits utilisant le format MSB par défaut.
 
