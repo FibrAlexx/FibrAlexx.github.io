@@ -42,7 +42,7 @@ Nous allons maintenant nous intéresser au système de fichiers, ici **squashfs-
 
 ![1779366798319](assets/images/2026-05-21-RCE-TPLink-Patched/1779366798319.png)
 
-En se servant de la commande **tree** nous pouvons apercevoir dans la partie dossier ` web/` un dossier appelé `mydlink/` contenant différents fichiers au format `.asp`, les fichiers possédant cette extension sont des fichiers Active Server Page, ce sont des documents web qui peuvent contenir des codes HTML, textes, graphiques et XML, ainsi ces fichiers serveur ne possèdent aucun code classique mais une directive côté serveur. Le vrai code de ces fichiers est donc compilé à l'intérieur du binaire du serveur web.
+En se servant de la commande **tree** nous pouvons apercevoir dans la partie dossier ` web/ ` un dossier appelé `mydlink/ ` contenant différents fichiers au format `.asp`, les fichiers possédant cette extension sont des fichiers Active Server Page, ce sont des documents web qui peuvent contenir des codes HTML, textes, graphiques et XML, ainsi ces fichiers serveur ne possèdent aucun code classique mais une directive côté serveur. Le vrai code de ces fichiers est donc compilé à l'intérieur du binaire du serveur web.
 
 Le contenu du fichier `set_admin.asp` pour simple exemple est un simple formulaire HTML, qui envoie ses donnéesà une URL spécifique : `/goform/form_admin` :
 
@@ -433,8 +433,6 @@ void websAspInit(void)
 
 
 ```
-
-*L'image ne monte pas toutes les fonctions présentes
 
 La fonction websAspInit() est donc le tableau de bord du serveur web, elle fait le lien entre les requêtes HTTP de l'utilisateur et les fonctions compilées du routeur.
 
