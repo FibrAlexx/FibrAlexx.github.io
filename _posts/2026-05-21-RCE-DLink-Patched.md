@@ -734,8 +734,8 @@ Une fois la chaîne construite, celle-ci est immédiatement transmise à la fonc
 
 Si un utilisateur malveillant envoie une requête POST vers l'URL `/goform/formSysCmd` retrouvable dans le fichier shell.asp, celui-ci nous permet de confirmer la faille et son exécution :
 
-```
-
+```html
+{% raw %}
 <html>
 <! Copyright (c) Realtek Semiconductor Corp., 2003. All Rights Reserved. ->
 <head>
@@ -790,6 +790,7 @@ function saveClick(){
 </body>
 
 </html>
+{% endraw %}
 ```
 
 Lorsque la page shell.asp se recharge, le serveur web exécute la fonction C `sysCmdLog`, celle-ci va ouvrir le fichier `/tmp/syscmd.log` qui contiendra à ce moment notre injection de commande et injecter son contenu directement au milieu de la page.
