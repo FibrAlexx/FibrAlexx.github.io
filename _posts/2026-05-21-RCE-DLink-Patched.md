@@ -40,7 +40,7 @@ Une fois l'outil installé nous pouvons donc relancer la commande binwalk qui ne
 
 Nous allons maintenant nous intéresser au système de fichiers, ici **squashfs-root-0**
 
-![1779366798319](image/2026-05-21-RCE-TPLink-Patched/1779366798319.png)
+![1779366798319](assets/images/2026-05-21-RCE-TPLink-Patched/1779366798319.png)
 
 En se servant de la commande **tree** nous pouvons apercevoir dans la partie dossier ` web/` un dossier appelé `mydlink/` contenant différents fichiers au format `.asp`, les fichiers possédant cette extension sont des fichiers Active Server Page, ce sont des documents web qui peuvent contenir des codes HTML, textes, graphiques et XML, ainsi ces fichiers serveur ne possèdent aucun code classique mais une directive côté serveur. Le vrai code de ces fichiers est donc compilé à l'intérieur du binaire du serveur web.
 
@@ -68,7 +68,7 @@ En déroulant les différents binaires présents nous tombons directement sur le
 
 Boa est un serveur web open source très léger, beaucoup utilisé dans les routeurs au début des années 2000-2010. Les constructeurs y ajoutaient en général des modifications pour supporter les scrtips ASP et les formulaires, créeant ainsi des failles d'exploitation.
 
-![1779367785072](image/2026-05-21-RCE-TPLink-Patched/1779367785072.png)
+![1779367785072](assets/images/2026-05-21-RCE-TPLink-Patched/1779367785072.png)
 
 Nous pouvons aussi noter la présence de `boa-dog.sh`, qui est un script **"Watchdog"** chargé de surveiller le processus `boa` et de le relancer s'il plante.
 
@@ -86,7 +86,7 @@ Nous allons donc nous servir de l'outil Ghidra qui permet de désassembler le co
 
 Grâce aux informations récupérées précédemment via la commande **file** nous pouvons donc ouvrir le binaire avec Ghidra en y rentrant les bonnes informations :
 
-![1779368536195](image/2026-05-21-RCE-TPLink-Patched/1779368536195.png)
+![1779368536195](assets/images/2026-05-21-RCE-TPLink-Patched/1779368536195.png)
 
 Nous choisissons donc ici comme langage : MIPS 32 - bits utilisant le format MSB par défaut.
 
