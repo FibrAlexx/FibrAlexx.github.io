@@ -38,11 +38,11 @@ Une fois l'outil installé nous pouvons donc relancer la commande binwalk qui ne
 * Avertissements de liens symboliques : Pour des raisons de sécurité, binwalk refuse de créer des liens qui pointent en dehors du repértoire de travail, il les redirige ainsi vers /dev/null afin d'éviter que l'extraction ne vienne écraser les fichiers de notre propre système.
 * Avertissement sur le kernel : binwalk a tenté de chercher des fichiers à l'intérieur de celui-ci, comme il n' y a pas de système de fichiers à l'intérieur du kernel, il affiche qu'il n'a rien pu extraire.
 
-Nous allons maintenant nous intéresser au système de fichiers, ici **squashfs-root-0**
+Nous allons maintenant nous intéresser au système de fichiers, ici `squashfs-root-0`
 
 ![1779366798319](assets/images/2026-05-21-RCE-TPLink-Patched/1779366798319.png)
 
-En se servant de la commande **tree** nous pouvons apercevoir dans la partie dossier ` web/` un dossier appelé `mydlink/` contenant différents fichiers au format `.asp`, les fichiers possédant cette extension sont des fichiers Active Server Page, ce sont des documents web qui peuvent contenir des codes HTML, textes, graphiques et XML, ainsi ces fichiers serveur ne possèdent aucun code classique mais une directive côté serveur. Le vrai code de ces fichiers est donc compilé à l'intérieur du binaire du serveur web.
+En se servant de la commande **tree** nous pouvons apercevoir dans la partie repértoire `web` un repértoire appelé `mydlink` contenant différents fichiers au format `.asp`, les fichiers possédant cette extension sont des fichiers Active Server Page, ce sont des documents web qui peuvent contenir des codes HTML, textes, graphiques et XML, ainsi ces fichiers serveur ne possèdent aucun code classique mais une directive côté serveur. Le vrai code de ces fichiers est donc compilé à l'intérieur du binaire du serveur web.
 
 Le contenu du fichier `set_admin.asp` pour simple exemple est un simple formulaire HTML, qui envoie ses donnéesà une URL spécifique : `/goform/form_admin` :
 
@@ -62,7 +62,7 @@ Le contenu du fichier `set_admin.asp` pour simple exemple est un simple formulai
 </html>
 ```
 
-Nous allons donc maintenant nous pencher du côté du dossier contenant les différents binaires, c'est-à-dire `bin/`,
+Nous allons donc maintenant nous pencher du côté du repértoire contenant les différents binaires, c'est-à-dire `bin`,
 
 En déroulant les différents binaires présents nous tombons directement sur le binaire faisant tourner le serveur web : `boa`.
 
@@ -70,11 +70,11 @@ Boa est un serveur web open source très léger, beaucoup utilisé dans les rout
 
 ![1779367785072](assets/images/2026-05-21-RCE-TPLink-Patched/1779367785072.png)
 
-Nous pouvons aussi noter la présence de `boa-dog.sh`, qui est un script **"Watchdog"** chargé de surveiller le processus `boa` et de le relancer s'il plante.
+Nous pouvons aussi noter la présence de `boa-dog.sh`, qui est un script `"Watchdog"` chargé de surveiller le processus `boa` et de le relancer s'il plante.
 
-Comme attendu le firmware du routeur se sert d'une architecture MIPS 32-bits, la particularité des architectures MIPS est l'endianness différente. En effet la grande majorité des architectures telles que x86_64, x86, ARM ou encore RISC-V sont en little endian, c'est-à-dire que la lecture des bits se fait du bits de poids faible vers le bit de poids fort (ex :` ici l'adresse 0xcafebabe se lira : 0xbe, 0xba, 0xfe, 0xca`)
+Comme attendu le firmware du routeur se sert d'une architecture MIPS 32-bits, la particularité des architectures MIPS est l'endianness différente. En effet la grande majorité des architectures telles que x86_64, x86, ARM ou encore RISC-V utilisent principalement le little endian, c'est-à-dire que la lecture des bits se fait du bits de poids faible vers le bit de poids fort (ex :` ici l'adresse 0xcafebabe se lira : 0xbe, 0xba, 0xfe, 0xca`)
 
-L'architecture MIPS est donc différente, elle est en big endian, ainsi les bits sont lus du bit de poids fort vers le bit de poids faible, il est possible d'obtenir quelques informations sur le binaire en se servant de la commande native **file** :
+L'architecture MIPS est donc différente, elle utilise le big endian, ainsi les bits sont lus du bit de poids fort vers le bit de poids faible, il est possible d'obtenir quelques informations sur le binaire en se servant de la commande native `file` :
 
 `file bin/boa bin/boa: ELF 32-bit MSB executable, MIPS, MIPS-I version 1 (SYSV), dynamically linked, interpreter /lib/ld-uClibc.so.0, no section header`
 
@@ -84,7 +84,7 @@ MSB ici signifiant donc Most Significant Bit.
 
 Nous allons donc nous servir de l'outil Ghidra qui permet de désassembler le code Assembleur du binaire pour le retranscrire du mieux possible en pseudocode C, Ghidra offre aussi une multitude d'outils permettant une facilitation de la manipulation du binaire.
 
-Grâce aux informations récupérées précédemment via la commande **file** nous pouvons donc ouvrir le binaire avec Ghidra en y rentrant les bonnes informations :
+Grâce aux informations récupérées précédemment via la commande `file` nous pouvons donc ouvrir le binaire avec Ghidra en y rentrant les bonnes informations :
 
 ![1779368536195](assets/images/2026-05-21-RCE-TPLink-Patched/1779368536195.png)
 
@@ -92,7 +92,7 @@ Nous choisissons donc ici comme langage : MIPS 32 - bits utilisant le format MSB
 
 Ici une première chose importante et avantageuse pour nous est le non strippage des symboles, en effet lors de la compilation en binaire, il est possible d'indiquer le strippage des symboles, les rendant ainsi illisibles pour complexifier la lecture du binaire via un désassembleur. Dans notre cas, le serveur web boa n'a pas été compilé avec l'option stripped.
 
-Une fois le chargement du binaire terminé, nous retrouvons donc directement une fonction **main** contenant le code principal du programme :
+Une fois le chargement du binaire terminé, nous retrouvons donc directement une fonction `main` contenant le code principal du programme :
 
 ```
 
@@ -221,6 +221,7 @@ LAB_0040885c:
     if (iVar2 == -1) {
       __s = "chroot";
       goto LAB_004087e4;
+            printf("[+] Stocke : %s\n", bloc);
     }
     iVar2 = chdir("/");
     if (iVar2 == -1) {
@@ -239,7 +240,7 @@ LAB_00408b98:
 
 ```
 
-Ainsi il est possible directement d'apercevoir une fonction appelée `websAspInit()`, cette fonction permet l'initialisation des routes des fichiers .asp, nous pouvons le confirmer en ouvrant cette fonction :
+Ainsi il est possible directement d'apercevoir une fonction appelée `websAspInit()`, cette fonction permet l'initialisation des routes des fichiers `.asp`, nous pouvons le confirmer en ouvrant cette fonction :
 
 ```
 
@@ -434,21 +435,19 @@ void websAspInit(void)
 
 ```
 
-*L'image ne monte pas toutes les fonctions présentes
+La fonction `websAspInit()` est donc le tableau de bord du serveur web, elle fait le lien entre les requêtes HTTP de l'utilisateur et les fonctions compilées du routeur.
 
-La fonction websAspInit() est donc le tableau de bord du serveur web, elle fait le lien entre les requêtes HTTP de l'utilisateur et les fonctions compilées du routeur.
-
-La fonction websFormDefine() nous permet de comprendre le format d'enregistrement de chaque lien :
+La fonction `websFormDefine()` nous permet de comprendre le format d'enregistrement de chaque lien :
 
 * paramètre 1 : Nom de la fonction
 * paramètre 2 : fonction C
 
 En déroulant les différents liens vers les fonctions C de cette liste, deux fonctions attire notre attention :
 
-* formSysCmd (Exécution de commandes système)
-* form_admin
+* formSysCmd() (Exécution de commandes système)
+* form_admin()
 
-L'analyse de la fonction form_admin met en évidence une vulnérabilité potentielle de type Authentication Bypass. En effet cette fonction ne possède aucun mécanisme de vérification de session :
+L'analyse de la fonction `form_admin()` met en évidence une vulnérabilité potentielle de type Authentication Bypass. En effet cette fonction ne possède aucun mécanisme de vérification de session :
 
 ```
 void form_admin(int param_1)
@@ -519,7 +518,7 @@ Ainsi n'importe quel utilisateur sur le réseau, authentifié ou non, peut force
 
 Cette première vulnérabilité permet ainsi d'envoyer une requête POST forgée pour modifier la configuration d'administration, ouvrir le port de gestion sur l'interface externe WAN et prendre le contrôle du routeur à distance depuis internet.
 
-Une très bonne comparaison est de prendre la fonction formLogin(), celle-ci comparée à form_admin, possède une vérification stricte de validation :
+Une très bonne comparaison est de prendre la fonction `formLogin()`, celle-ci comparée à `form_admin`, possède une vérification stricte de validation :
 
 ```
 
