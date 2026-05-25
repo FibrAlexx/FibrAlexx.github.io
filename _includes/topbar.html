@@ -1,0 +1,29 @@
+<div id="topbar-wrapper" class="d-flex align-items-center justify-content-between px-3 px-xl-4">
+  <header id="topbar" class="d-flex align-items-center justify-content-between flex-grow-1">
+    <nav aria-label="Breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{{ '/' | relative_url }}">Home</a></li>
+      </ol>
+    </nav>
+    <button type="button" id="sidebar-trigger" class="btn btn-link">
+      <i class="fas fa-bars fa-fw"></i>
+    </button>
+    <div id="search-wrapper" class="align-items-center mb-0">
+      <i class="fas fa-search fa-fw text-muted"></i>
+      <input class="form-control" id="search-input" type="search" aria-label="search" autocomplete="off" placeholder="Search...">
+    </div>
+  </header>
+</div>
+
+{% if page.layout == 'home' %}
+<div class="d-flex flex-column flex-sm-row align-items-center mt-4 mb-5 pb-4 border-bottom w-100 px-3 px-xl-4">
+  <img src="https://github.com/FibrAlexx.png" alt="Alexis" class="rounded-circle mb-3 mb-sm-0 me-sm-4" style="width: 90px; height: 90px; object-fit: cover; border: 2px solid var(--main-border-color);">
+  
+  <div>
+    <h1 class="fw-bold h3 mb-2 text-start">Bonjour, moi c'est Alexis 👋</h1>
+    <p class="text-muted mb-0 text-start" style="font-size: 0.95rem; line-height: 1.5;">
+      Bienvenue sur mon espace ! Ici, je partage mes articles (notamment sur l'exploitation binaire, Stack/Heap, IoT, ROP), mes documents et mes projets.
+    </p>
+  </div>
+</div>
+{% endif %}
