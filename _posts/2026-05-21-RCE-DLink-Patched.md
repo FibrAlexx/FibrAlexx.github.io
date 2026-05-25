@@ -819,7 +819,7 @@ L'analyse de ce firmware permet ainsi de démontrer les failles de sécurité su
 Nous allons donc maintenant émuler le serveur web `boa` afin de pouvoir recréer et tester les failles théoriques que nous avons trouvé. Afin d'émuler le serveur web nous devons prendre en compte quelques paramètres fondamentaux :
 
 * Le binaire utilise l'architecture MIPS 32-bits en MSB.
-* Le binaire appelle la librairie `libapmib.so` ainsi qu'une `MIB` afin de récupérer les informations des connexions utilisateur.
+* Le binaire appelle la librairie `libapmib.so` ainsi qu'une `MIB` afin d'initialiser les informations de configuration du serveur.
 * Le binaire appels des matériels physiques et non virtuels
 
 Ainsi il va falloir émuler l'architecture MIPS 32-bits MSB, recréer une nouvelle MIB afin d'éviter toute erreur de librairie avec le serveur web boa puis nous devrons monter les différents repértoires ainsi qu'en recréer afin d'émuler les matériels physiques.
