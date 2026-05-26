@@ -6,7 +6,7 @@ tags: [reverse, Rust, Anti-Debug]
 ---
 #### 1. Introduction
 
-Les nanomites sont une technique d'obfuscation de code logicielle conçue pour casser l'analyse statique et le reverse simple de programmes. Elle repose sur la séparation d'un programme en deux entités : 
+Les nanomites sont une technique d'obfuscation de code logicielle conçue pour casser l'analyse statique et le reverse simple de programmes. Elle repose sur la séparation d'un programme en deux entités :
 
 * `Un processus Enfant (Child)`
 * `Un processus Parent`
@@ -25,9 +25,9 @@ Lorsque l'enfant tombe sur une interruption matérielle `INT 3`, celui-ci se fig
 
 #### 3. Flux d'exécution
 
-Dès que l'enfant rencontre une nanomite, le flux temporel suit un cycle spécifique : 
+Dès que l'enfant rencontre une nanomite, le flux temporel suit un cycle spécifique :
 
-##### L'exécution linéaire de l'enfant : 
+##### L'exécution linéaire de l'enfant :
 
 L'enfant exécute ses instructions de manière classique. Les valeurs nécessaires à la suite du programme sont chargées dans les registres du processeur.
 
@@ -41,7 +41,7 @@ Le noyau intercepte l'exception de l'enfant et la traduit en un signal `SIGTRAP`
 
 ##### Le choix du parent
 
-Le parent passe en mode supervision puis réalise différentes actions importantes : 
+Le parent passe en mode supervision puis réalise différentes actions importantes :
 
 * Il extrait l'intégralité du contexte des registres de l'enfant afin d'en analyser l'état interne via `ptrace(PTRACE_GETREGS)`.
 * En fonction de sa table de correspondance ainsi que de l'adresse d'interruption et des valeurs dans les registres, il décide du chemin que prendra ensuite l'enfant.
@@ -49,7 +49,7 @@ Le parent passe en mode supervision puis réalise différentes actions important
 
 ##### Le détachement
 
-Une fois la supervision terminée, le parent ordonne la reprise de l'exécution de l'enfant via `ptrace(PTRACE_CONT)` et se rendort fige immédiatement dans un nouveau `waitpid()`. L'esclave est ensuite réveillé par le noyau, reprend son cours initial et continue avec ses registres altérés et son nouveau flux d'exécution.
+Une fois la supervision terminée, le parent ordonne la reprise de l'exécution de l'enfant via `ptrace(PTRACE_CONT)` et se rendort immédiatement dans un nouveau `waitpid()`. L'esclave est ensuite réveillé par le noyau, reprend son cours initial et continue avec ses registres altérés et son nouveau flux d'exécution.
 
 #### 4. Complexité de l'analyse statique
 
@@ -59,7 +59,7 @@ En ajoutant des nanomites, le `CFG` devient totalement illogique. Les blocs de c
 
 Le décompilateur s'arrête donc souvent au premier `INT 3`, considérant tout ce qui suit comme du code mort ou inaccessible. Le pseudo-code généré devient donc incomplet, voire totalement vide.
 
-Exemple de pseudo-code s'arrêtant au premier `INT 3` sans afficher la suite : 
+Exemple de pseudo-code s'arrêtant au premier `INT 3` sans afficher la suite :
 
 ```
 
