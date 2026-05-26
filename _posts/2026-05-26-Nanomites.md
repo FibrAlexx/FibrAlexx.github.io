@@ -99,7 +99,7 @@ Le décompilateur tombe sur un `INT 3` et renvoie `invalidInstructionException()
 
 #### 5. La résistance au Patching
 
-Sur un binaire classique, un patch peut être appliqué en inversant un saut, une instruction ou une valeur afin de forcer le succès d'une condition. Sur un programme protégé par les nanomites, si l'interruption matérielle `INT 3` est supprimée ou modifiée, le parent n'est jamais alerté, les registres et le flux d'exécution de l'enfant ne sont jamais modifiés, ainsi le programme crash ou s'arrête sans avoir exécution son but initial.
+Sur un binaire classique, un patch peut être appliqué en inversant un saut, une instruction ou une valeur afin de forcer le succès d'une condition. Sur un programme protégé par les nanomites, si l'interruption matérielle `INT 3` est supprimée ou modifiée, le parent n'est jamais alerté, les registres et le flux d'exécution de l'enfant ne sont jamais modifiés, ainsi le programme crash ou s'arrête sans avoir exécuté son but initial.
 
 #### 6. Analyse dynamique
 
