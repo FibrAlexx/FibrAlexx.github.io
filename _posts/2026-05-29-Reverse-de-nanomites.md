@@ -154,7 +154,7 @@ Une deuxième comparaison est faite un peu plus loin entre `rsp+0x78` et la vale
 
 Pour l'instant nous ne pouvons pas comprendre la logique de vérification, nous n'avons vu que certaines comparaisons pouvant être intéressantes. Nous allons maintenant passer à la fonction `run_slave` : 
 
-Le programme commence a s'exécuter et s'arrête directement via INT3, c'est à ce moment-là que le parent va récupérer le contenu des registres de l'enfant : 
+Le programme commence a s'exécuter et s'arrête directement via `INT3`, c'est à ce moment-là que le parent va récupérer le contenu des registres de l'enfant : 
 
 ```
    0x000055555556b270 <+0>:     push   rbx
@@ -227,7 +227,7 @@ Ce que le parent fait à ce moment :
 * Ecrit de force une valeur directement dans l'espace mémoire ou dans les registres de l'enfant.
 * Appelle ensuite `ptrace(PTRACE_CONT)` afin d'ordonner à l'enfant de reprendre son exécution.
 
-Le parent effectue ensuite encore un saut vers le début de sa propre boucle à l'adresse 0x55555556acdi : 
+Le parent effectue ensuite encore un saut vers le début de sa propre boucle à l'adresse `0x55555556acdi` : 
 
 ```
  0x000055555556acd1 <+257>:   add    rsp,0x1d8
