@@ -27,9 +27,9 @@ Le binaire a été compilé avec les différentes protections (peuvent être vue
 
 Nous lançons donc le binaire une première fois afin d'analyser son comportement : 
 
-`./nanomites Token:`
-
-` sdsdqs Bad token...`
+`./nanomites 
+Token: sdsdqdfs 
+Bad token...`
 
 Le binaire attend donc un password en entrée, si le password fourni est faux, alors celui-ci renvoie la chaîne de caractères : `Bad token...`
 
