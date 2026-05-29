@@ -27,11 +27,11 @@ Le binaire a été compilé avec les différentes protections (peuvent être vue
 
 Nous lançons donc le binaire une première fois afin d'analyser son comportement : 
 
-`./nanomites
-Password: sdsdqs
-Bad password...`
+`./nanomites Token:`
 
-Le binaire attend donc un password en entrée, si le password fourni est faux, alors celui-ci renvoie la chaîne de caractères : `Bad password...`
+` sdsdqs Bad token...`
+
+Le binaire attend donc un password en entrée, si le password fourni est faux, alors celui-ci renvoie la chaîne de caractères : `Bad token...`
 
 Nous allons effectuer un strace sur le binaire, afin de connaître la chronologie du binaire et les appels intéressants : 
 
@@ -44,27 +44,21 @@ Le plus important et intéressant ici sont les différents appels `ptrace`, nous
 * `ptrace(PTRACE_SETREGS, 1406, {(valeurs modifiées des registres)...}` : Permet au parent de modifier le contexte des registres de l'enfant.
 * `ptrace(PTRACE_KILL, 1406)` : Tue le processus enfant une fois que le programme se termine et se ferme.
 
-Nous retrouvons aussi notre fameuse chaîne de caractères : `Bad password...` : 
+Nous retrouvons aussi notre fameuse chaîne de caractères : `Bad token...` :
 
-`write(1, "Bad password...\n", 16)`
+`write(1, "Bad token...\n", 12)`
 
 Il est donc facile de comprendre que dans le binaire : 
 
-* Le processus parent créé un processus enfant et s'attache à lui avec la fonction `ptrace(PTRACE_TRACEME)`.
-* L'enfant exécute le programme et au moment de certaines interruptions (instruction `INT3` utilisée par les nanomites), le parent prends la main et récupère le contexte des registres de l'enfant puis le modifie afin d'y effectuer certaines choses avec.
-* Une fois la modification finie, une comparaison est faite puis selon le password rentré, la chaîne de caractères `Bad password...` apparaît ou non et le programme se termine.
-
-Grâce au SigHandler SIGCHLD étant un signal permettant de réveiller un processus parent dont l'enfant vient de mourir, nous pouvons obtenir certaines informations triviales mais qui confirment notre théorie : 
-
-`SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=1406, si_uid=0, si_status=0, si_utime=0, si_stime=0}`
-
-le paramètre `si_pid=1406` nous confirme donc que le pid vu dans les appels ptrace est bien celui de l'enfant.
+* Le processus parent crée un processus enfant et s'attache à lui avec la fonction `ptrace(PTRACE_TRACEME)`.
+* L'enfant exécute le programme et au moment de certaines interruptions (instructions `INT3` utilisées par les nanomites), le parent prend la main et récupère le contexte des registres de l'enfant puis le modifie afin d'y effectuer certaines choses avec.
+* Une fois la modification finie, une comparaison est faite puis selon le password entré, la chaîne de caractères `Bad token...` apparaît ou non et le programme se termine.
 
 #### 3. Analyse du binaire
 
 Lorsqu'un binaire est protégé par des nanomites, l'analyse statique devient extrêmement complexe, mais reste tout de même possible.
 
-Nous allons ici ouvrir le binaire via GDB afin de récupérer l'entiereté du code du binaire, nous pourrions aussi le faire via Ghidra mais le pseudo-code étant inutile dû aux interruptions INT3, GDB est donc plus rapide a utiliser dans notre cas.
+Nous allons ici ouvrir le binaire via GDB afin de récupérer l'entiereté du code du binaire, nous pourrions aussi le faire via un désassembleur comme Ghidra ou encore IDA mais le pseudo-code généré par ces désassembleurs sera illisible dû aux interruptions `INT3`.
 
 Ce qu'il faut savoir avec le compilateur Rust, est que celui-ci afin d'éviter les collisions et de s'y retrouver, génère des noms unique pour chaque fonction, ainsi notre vrai fonction `main` ne s'appelle pas directement `main`, en tappant la commande disas main, nous pouvons donc retrouver le vrai nom de celle-ci : 
 
@@ -230,7 +224,7 @@ Le parent saute donc à une adresse de sa fonction, ici `0x55555556afa2` :
 Ce que le parent fait à ce moment : 
 
 * Prépare l'argument `0x21` qui correspond a la constante `PTRACE_POKEDATA` pour `ptrace()`.
-* Ecrit de forcer une valeur directement dans l'espace mémoire ou dans les registres de l'enfant.
+* Ecrit de force une valeur directement dans l'espace mémoire ou dans les registres de l'enfant.
 * Appelle ensuite `ptrace(PTRACE_CONT)` afin d'ordonner à l'enfant de reprendre son exécution.
 
 Le parent effectue ensuite encore un saut vers le début de sa propre boucle à l'adresse 0x55555556acdi : 
@@ -268,7 +262,7 @@ La suite du programme déclenche ainsi notre rust panic qui fait planter le prog
 
 Ainsi il est donc possible de comprendre que la comparaison avec `0x99` est une sécurité permettant de confirmer la validation du password et quitter proprement le programme.
 
-Il ne nous reste donc plus que la valeur `0x601`, par déduction celle-ci devrait être notre valeur de comparaison avec notre chaîne de caractères additionnée. Nous allons donc créer un programme qui nous génère une chaîne de caractères aléatoires faisant 0x601 moins 0xa (0xa correspondant à \n) : 
+Il ne nous reste donc plus que la valeur `0x601`, par déduction celle-ci devrait être notre valeur de comparaison avec notre chaîne de caractères additionnée. Nous allons donc créer un programme qui nous génère une chaîne de caractères aléatoires faisant `0x601` moins `0xa` (`0xa` correspondant à `\n`) : 
 
 ```
 import random
@@ -293,8 +287,8 @@ def get_valid_chain(target=1527):
     return "".join(chain)
 
 chaine_valide = get_valid_chain()
-print(f"Password généré : {chaine_valide}")
-print(f"Somme des caractères du password : {sum(ord(c) for c in chaine_valide)}")
+print(f"Token généré : {chaine_valide}")
+print(f"Somme des caractères du token : {sum(ord(c) for c in chaine_valide)}")
 ```
 
 A chaque lancement, ce programme nous donne une chaîne de caractères dont la somme vaut 1527, nous pouvons ainsi valider le programme avec différents passwords générés : 
@@ -303,17 +297,17 @@ A chaque lancement, ce programme nous donne une chaîne de caractères dont la s
 (base) ┌──(root㉿pc-alexis)-[~/Rust/Reverse/nanomites]
 └─# ./nanomites
 Password: SuRGXLFVgvkJVOSVv
-Good Password !
+Good Token !
 
 (base) ┌──(root㉿pc-alexis)-[~/Rust/Reverse/nanomites]
 └─# ./nanomites
 Password: CeB6wI90MUaG6cBrPmZ
-Good Password !
+Good Token !
 
 (base) ┌──(root㉿pc-alexis)-[~/Rust/Reverse/nanomites]
 └─# ./nanomites
 Password: 4KgE2zHBP1kUZpRGcDK
-Good Password !
+Good Token !
 ```
 
 #### 4. Code source du binaire 
@@ -343,7 +337,7 @@ fn run_slave() {
 
     unsafe { asm!("int 3") };
 
-    print!("Password: ");
+    print!("Token: ");
     io::stdout().flush().unwrap();
     let mut raw_input = String::new();
     io::stdin().read_line(&mut raw_input).unwrap();
@@ -419,11 +413,11 @@ fn run_master(child_pid: Pid) {
                             WaitStatus::Stopped(_, nix::sys::signal::Signal::SIGTRAP) => {
                                 let final_regs = ptrace::getregs(child_pid).unwrap();
                                 if final_regs.rax == 0x99 {
-                                    println!("Good Password !");
+                                    println!("Good Token !");
                                 }
                             }
                             _ => {
-                                println!("Good Password !");
+                                println!("Good Token !");
                             }
                         }
                     }
@@ -433,7 +427,7 @@ fn run_master(child_pid: Pid) {
                         ptrace::cont(child_pid, None).unwrap();
 
                         waitpid(child_pid, None).unwrap();
-                        println!("Bad password...");
+                        println!("Bad token...");
                     }
                     let _ = ptrace::kill(child_pid);
                     break;
