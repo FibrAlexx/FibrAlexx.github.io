@@ -10,11 +10,11 @@ Le binaire utilise un principe de "laisser passer". Celui-ci se base sur un prin
 
 #### 1. Informations sur le binaire
 
-Nous avons donc un binaire compilé en `Rust`, utilisant l'architecture `ELF x86_64`, celui-ci est lié dynamiquement à la `libc` et est non strippé : 
+Nous avons donc un binaire compilé en `Rust`, utilisant l'architecture `ELF x86_64`, celui-ci est lié dynamiquement à la `libc` et est non strippé :
 
 `nanomites: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=b8f01354abc8c786130947f04f385b87050d4256, not stripped`
 
-Le binaire a été compilé avec les différentes protections (peuvent être vues via la commande : `checksec --file=nanomites`) : 
+Le binaire a été compilé avec les différentes protections (peuvent être vues via la commande : `checksec --file=nanomites`) :
 
 * `RELRO: FULL RELRO` (Full relro indique que les tables GOT et PLT sont en lectures seules).
 * `Stack: No canary found` (Le binaire ne possède pas de canary permettant de détecter les SSP).
@@ -23,21 +23,19 @@ Le binaire a été compilé avec les différentes protections (peuvent être vue
 * `Stripped: No` (Les symboles du binaire ne sont pas strippés, donc accessibles en lecture claire).
 * `ASLR: ASLR Enabled` (Toutes les adresses des segments du noyau changent à chaque exécution).
 
-#### 2. Comportement du binaire 
+#### 2. Comportement du binaire
 
-Nous lançons donc le binaire une première fois afin d'analyser son comportement : 
+Nous lançons donc le binaire une première fois afin d'analyser son comportement :
 
-`./nanomites 
-Token: sdsdqdfs 
-Bad token...`
+`./nanomites  Token: sdsdqdfs  Bad token...`
 
-Le binaire attend donc un password en entrée, si le password fourni est faux, alors celui-ci renvoie la chaîne de caractères : `Bad token...`
+Le binaire attend donc un token en entrée, si le token fourni est faux, alors celui-ci renvoie la chaîne de caractères : `Bad token...`
 
-Nous allons effectuer un strace sur le binaire, afin de connaître la chronologie du binaire et les appels intéressants : 
+Nous allons effectuer un strace sur le binaire, afin de connaître la chronologie du binaire et les appels intéressants :
 
 `strace ./nanomites`
 
-Le plus important et intéressant ici sont les différents appels `ptrace`, nous pouvons retrouver : 
+Le plus important et intéressant ici sont les différents appels `ptrace`, nous pouvons retrouver :
 
 * `ptrace(PTRACE_CONT, 1406, NULL, 0)` : Permettant d'ordonner à l'enfant de continuer son exécution une fois que le parent a pris la main.
 * `ptrace(PTRACE_GETREGS, 1406, {(valeurs des registres)...}` : Permet au parent de récupérer le contexte des registres de l'enfant.
@@ -48,11 +46,11 @@ Nous retrouvons aussi notre fameuse chaîne de caractères : `Bad token...` :
 
 `write(1, "Bad token...\n", 12)`
 
-Il est donc facile de comprendre que dans le binaire : 
+Il est donc facile de comprendre que dans le binaire :
 
 * Le processus parent crée un processus enfant et s'attache à lui avec la fonction `ptrace(PTRACE_TRACEME)`.
 * L'enfant exécute le programme et au moment de certaines interruptions (instructions `INT3` utilisées par les nanomites), le parent prend la main et récupère le contexte des registres de l'enfant puis le modifie afin d'y effectuer certaines choses avec.
-* Une fois la modification finie, une comparaison est faite puis selon le password entré, la chaîne de caractères `Bad token...` apparaît ou non et le programme se termine.
+* Une fois la modification finie, une comparaison est faite puis selon le token entré, la chaîne de caractères `Bad token...` apparaît ou non et le programme se termine.
 
 #### 3. Analyse du binaire
 
@@ -60,7 +58,7 @@ Lorsqu'un binaire est protégé par des nanomites, l'analyse statique devient ex
 
 Nous allons ici ouvrir le binaire via GDB afin de récupérer l'entiereté du code du binaire, nous pourrions aussi le faire via un désassembleur comme Ghidra ou encore IDA mais le pseudo-code généré par ces désassembleurs sera illisible dû aux interruptions `INT3`.
 
-Ce qu'il faut savoir avec le compilateur Rust, est que celui-ci afin d'éviter les collisions et de s'y retrouver, génère des noms unique pour chaque fonction, ainsi notre vrai fonction `main` ne s'appelle pas directement `main`, en tappant la commande disas main, nous pouvons donc retrouver le vrai nom de celle-ci : 
+Ce qu'il faut savoir avec le compilateur Rust, est que celui-ci afin d'éviter les collisions et de s'y retrouver, génère des noms unique pour chaque fonction, ainsi notre vrai fonction `main` ne s'appelle pas directement `main`, en tappant la commande disas main, nous pouvons donc retrouver le vrai nom de celle-ci :
 
 ```
 gef➤  disas main
@@ -80,7 +78,7 @@ Dump of assembler code for function main:
 
 Celle-ci se nomme donc : `_ZN9nanomites4main17h9bc09d21e49a71c7E`
 
-En effectuant un désassemblage de celle-ci, nous pouvons retrouver deux autres fonctions appelées par main : 
+En effectuant un désassemblage de celle-ci, nous pouvons retrouver deux autres fonctions appelées par main :
 
 ```
 gef➤  disas _ZN9nanomites4main17h9bc09d21e49a71c7E
@@ -106,7 +104,7 @@ Dump of assembler code for function _ZN9nanomites4main17h9bc09d21e49a71c7E:
    0x0000000000017267 <+71>:    call   QWORD PTR [rip+0x4248b]        # 0x596f8
 ```
 
-Nous savons maintenant qu'il y'a aussi deux autres fonctions : 
+Nous savons maintenant qu'il y'a aussi deux autres fonctions :
 
 * `_ZN9nanomites10run_master17h1a8e7e74c8010023E` : Servant surement à gérer la comparaison et les registres, ainsi que le Flux d'exécution de l'enfant.
 * `_ZN9nanomites9run_slave17h3a22d056c97741c9E` : Servant à exécuter le code et suivant les modifications du parent sur celui-ci.
@@ -121,7 +119,7 @@ Récupération du contexte des registres de l'enfant d'une taille de `0xd8` octe
 0x000055555556ad0d <+317>:   call   QWORD PTR [rip+0x429c5]  # ptrace(PTRACE_GETREGS, ...)
 ```
 
-Comparaison avec une valeur fixe : 
+Comparaison avec une valeur fixe :
 
 ```
 0x000055555556ad13 <+323>:   mov    r15,QWORD PTR [rsp+0x150]
@@ -129,13 +127,13 @@ Comparaison avec une valeur fixe :
 0x000055555556ad22 <+338>:   jne    0x55555556ad30
 ```
 
-Si la valeur de comparaison est correcte, alors celle-ci est conservée : 
+Si la valeur de comparaison est correcte, alors celle-ci est conservée :
 
 ```
 0x000055555556ad58 <+392>:   mov    QWORD PTR [rsp+0x18],r15
 ```
 
-Deuxième vérification entre la valeur comparée avec `0x601`, afin de vérifier que les registres n'aient pas été modifiés entre temps : 
+Deuxième vérification entre la valeur comparée avec `0x601`, afin de vérifier que les registres n'aient pas été modifiés entre temps :
 
 ```
 0x000055555556ae2a <+602>:   cmp    QWORD PTR [rsp+0x18],0x601
@@ -152,9 +150,9 @@ Une deuxième comparaison est faite un peu plus loin entre `rsp+0x78` et la vale
 0x000055555556af0a <+826>:   je     0x55555556afa2
 ```
 
-Pour l'instant nous ne pouvons pas comprendre la logique de vérification, nous n'avons vu que certaines comparaisons pouvant être intéressantes. Nous allons maintenant passer à la fonction `run_slave` : 
+Pour l'instant nous ne pouvons pas comprendre la logique de vérification, nous n'avons vu que certaines comparaisons pouvant être intéressantes. Nous allons maintenant passer à la fonction `run_slave` :
 
-Le programme commence a s'exécuter et s'arrête directement via `INT3`, c'est à ce moment-là que le parent va récupérer le contenu des registres de l'enfant : 
+Le programme commence a s'exécuter et s'arrête directement via `INT3`, c'est à ce moment-là que le parent va récupérer le contenu des registres de l'enfant :
 
 ```
    0x000055555556b270 <+0>:     push   rbx
@@ -165,7 +163,7 @@ Le programme commence a s'exécuter et s'arrête directement via `INT3`, c'est �
    0x000055555556b286 <+22>:    int3
 ```
 
-Bien plus bas dans la fonction, nous trouvons une bonne partie de la logique de validation du password : 
+Bien plus bas dans la fonction, nous trouvons une bonne partie de la logique de validation du password :
 
 ```
 0x000055555556b5c0 <+848>:   movzx  edi,BYTE PTR [rax]
@@ -181,29 +179,29 @@ Bien plus bas dans la fonction, nous trouvons une bonne partie de la logique de 
 0x000055555556b5fa <+906>:   add    rsi,r9                   ; Cumul global dans RSI
 ```
 
-Le programme récupère donc chaque caractère de la chaîne de caractères que nous rentrons en entrée et les additionne, afin de savoir ce que le programme additionne avec chaque caractères nous pouvons nous intéresser un peu plus à l'instruction : 
+Le programme récupère donc chaque caractère de la chaîne de caractères que nous rentrons en entrée et les additionne, afin de savoir ce que le programme additionne avec chaque caractères nous pouvons nous intéresser un peu plus à l'instruction :
 
 `0x000055555556b5c0 <+848>:   movzx  edi, BYTE PTR [rax]`
 
 * `BYTE PTR [rax]` : Le programme va donc chercher un seul octet de l'adresse rax où se trouve le password que nous avons entré
 * `movzx` : Cette instruction prend l'octet récupéré et le copie dans un registre plus grand (ici `edi` qui fait 32 bits), en remplissant la suite de zéros.
 
-Cela signifie donc que le programme extrait directement la valeur brute de l'octet de notre caractère, exemple : 
+Cela signifie donc que le programme extrait directement la valeur brute de l'octet de notre caractère, exemple :
 
 * Si nous avons rentré le caractère `A`, l'octet en mémoire vaut donc `01000001` en binaire ce qui vaut donc `0x41` en hexadécimal et `65` en décimal.
 
-Ainsi le programme prend la valeur brute de chaque caractère du password que nous avons rentré et les additionne. 
+Ainsi le programme prend la valeur brute de chaque caractère du password que nous avons rentré et les additionne.
 
 L'entrée stdin possède un petit piège dans lequel il est important de ne pas tomber non plus : la fin de ligne `\n`. Lorsque nous pressons `Entrée` dans le terminal, la fonction de lecture capture généralement notre saisie plus le caractère de fin de ligne.
 
-Avant de pouvoir retrouver le password, nous devons comprendre aussi à  quoi correspondent les valeurs `0x601` et `0x99`. Nous pouvons retrouver `0x99` dans cette partie de la fonction run_slave : 
+Avant de pouvoir retrouver le password, nous devons comprendre aussi à  quoi correspondent les valeurs `0x601` et `0x99`. Nous pouvons retrouver `0x99` dans cette partie de la fonction run_slave :
 
 ```
 0x000055555556b63a <+970>:   mov    rax,0x99
 0x000055555556b641 <+977>:   int3
 ```
 
-L'enfant place donc la valeur `0x99` dans le registre rax puis effectue une interruption `INT3`, une fois que le parent a pris la main, celui-ci voit `0x99` dans rax et fait donc : 
+L'enfant place donc la valeur `0x99` dans le registre rax puis effectue une interruption `INT3`, une fois que le parent a pris la main, celui-ci voit `0x99` dans rax et fait donc :
 
 ```
 0x000055555556aefe <+814>:   cmp    QWORD PTR [rsp+0x78],0x99
@@ -211,7 +209,7 @@ L'enfant place donc la valeur `0x99` dans le registre rax puis effectue une inte
 0x000055555556af0a <+826>:   je     0x55555556afa2
 ```
 
-Le parent saute donc à une adresse de sa fonction, ici `0x55555556afa2` : 
+Le parent saute donc à une adresse de sa fonction, ici `0x55555556afa2` :
 
 ```
 0x000055555556afa2 <+978>:   mov    esi,0x21
@@ -221,13 +219,13 @@ Le parent saute donc à une adresse de sa fonction, ici `0x55555556afa2` :
    0x000055555556afb5 <+997>:   jmp    0x55555556acd1 <_ZN9nanomites10run_master17h1a8e7e74c8010023E+257>
 ```
 
-Ce que le parent fait à ce moment : 
+Ce que le parent fait à ce moment :
 
 * Prépare l'argument `0x21` qui correspond a la constante `PTRACE_POKEDATA` pour `ptrace()`.
 * Ecrit de force une valeur directement dans l'espace mémoire ou dans les registres de l'enfant.
 * Appelle ensuite `ptrace(PTRACE_CONT)` afin d'ordonner à l'enfant de reprendre son exécution.
 
-Le parent effectue ensuite encore un saut vers le début de sa propre boucle à l'adresse `0x55555556acdi` : 
+Le parent effectue ensuite encore un saut vers le début de sa propre boucle à l'adresse `0x55555556acdi` :
 
 ```
  0x000055555556acd1 <+257>:   add    rsp,0x1d8
@@ -247,7 +245,7 @@ Le parent effectue ensuite encore un saut vers le début de sa propre boucle à 
 
 Le parent nettoie l'espace alloué puis restaure le contexte des registres avec toutes les instructions pop successives, une instruction ret est ensuite utilisée afin de terminer la fonction `run_master` proprement.
 
-Si après le ret, le programme continue à lire, celui-ci vérifie l'état de l'enfant puis saute vers encore une autre branche de la fonction : 
+Si après le ret, le programme continue à lire, celui-ci vérifie l'état de l'enfant puis saute vers encore une autre branche de la fonction :
 
 ```
 0x000055555556afe1 <+1041>:  call   QWORD PTR [rip+0x42711]        # 0x5555555ad6f8
@@ -262,7 +260,7 @@ La suite du programme déclenche ainsi notre rust panic qui fait planter le prog
 
 Ainsi il est donc possible de comprendre que la comparaison avec `0x99` est une sécurité permettant de confirmer la validation du password et quitter proprement le programme.
 
-Il ne nous reste donc plus que la valeur `0x601`, par déduction celle-ci devrait être notre valeur de comparaison avec notre chaîne de caractères additionnée. Nous allons donc créer un programme qui nous génère une chaîne de caractères aléatoires faisant `0x601` moins `0xa` (`0xa` correspondant à `\n`) : 
+Il ne nous reste donc plus que la valeur `0x601`, par déduction celle-ci devrait être notre valeur de comparaison avec notre chaîne de caractères additionnée. Nous allons donc créer un programme qui nous génère une chaîne de caractères aléatoires faisant `0x601` moins `0xa` (`0xa` correspondant à `\n`) :
 
 ```
 import random
@@ -291,7 +289,7 @@ print(f"Token généré : {chaine_valide}")
 print(f"Somme des caractères du token : {sum(ord(c) for c in chaine_valide)}")
 ```
 
-A chaque lancement, ce programme nous donne une chaîne de caractères dont la somme vaut 1527, nous pouvons ainsi valider le programme avec différents passwords générés : 
+A chaque lancement, ce programme nous donne une chaîne de caractères dont la somme vaut 1527, nous pouvons ainsi valider le programme avec différents passwords générés :
 
 ```
 (base) ┌──(root㉿pc-alexis)-[~/Rust/Reverse/nanomites]
@@ -310,7 +308,7 @@ Password: 4KgE2zHBP1kUZpRGcDK
 Good Token !
 ```
 
-#### 4. Code source du binaire 
+#### 4. Code source du binaire
 
 ```
 use nix::sys::ptrace;
