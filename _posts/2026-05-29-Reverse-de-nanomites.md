@@ -289,7 +289,7 @@ print(f"Token généré : {chaine_valide}")
 print(f"Somme des caractères du token : {sum(ord(c) for c in chaine_valide)}")
 ```
 
-A chaque lancement, ce programme nous donne une chaîne de caractères dont la somme vaut 1527, nous pouvons ainsi valider le programme avec différents passwords générés :
+A chaque lancement, ce programme nous donne une chaîne de caractères dont la somme vaut 1527, nous pouvons ainsi valider le programme avec différents tokens générés :
 
 ```
 (base) ┌──(root㉿pc-alexis)-[~/Rust/Reverse/nanomites]
