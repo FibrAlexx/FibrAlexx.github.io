@@ -190,7 +190,7 @@ Cela signifie donc que le programme extrait directement la valeur brute de l'oct
 
 * Si nous avons rentré le caractère `A`, l'octet en mémoire vaut donc `01000001` en binaire ce qui vaut donc `0x41` en hexadécimal et `65` en décimal.
 
-Ainsi le programme prend la valeur brute de chaque caractère du password que nous avons rentré et les additionne.
+Ainsi le programme prend la valeur brute de chaque caractère du token que nous avons rentré et les additionne.
 
 L'entrée stdin possède un petit piège dans lequel il est important de ne pas tomber non plus : la fin de ligne `\n`. Lorsque nous pressons `Entrée` dans le terminal, la fonction de lecture capture généralement notre saisie plus le caractère de fin de ligne.
 
